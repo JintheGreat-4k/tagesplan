@@ -394,7 +394,7 @@ button.ev:hover{background:var(--surface-2)}
     <p>Verbindung auf diesem Gerät trennen? Die Aufgaben bleiben in der Google-Tabelle. Danach musst du dieses Gerät neu einrichten.</p>
     <div class="sheet-acts"><button type="button" class="danger solid" id="set-confirm-yes">Trennen</button><button type="button" class="ghost" id="set-confirm-no">Abbrechen</button></div>
   </div>
-  <p class="hint">Marcs Tagesplan · Version 2.1</p>
+  <p class="hint">Marcs Tagesplan · Version 2.2</p>
 </div>
 
 <div id="toast" role="status" hidden><span id="toast-t"></span><button type="button" id="toast-a" hidden></button></div>
@@ -484,8 +484,8 @@ function parseQuick(text, today){
 }
 const GUESS = [
   [/\bpfadi|\bbiber|\bwölfli|\bpios?\b|\blager|\bleitertreff/i, "pfadi"],
-  [/\bbewerb|\bdossier|\blehrdiplom|\bstellen?\b|\bmotivationsschreiben/i, "bewerbung"],
-  [/\bzivi|\bschule|\bklasse\b|\belternbrief|\blektion|\bschulhaus/i, "zivi"],
+  [/\bbewerb|\bdossier|\blehrdiplom|\bstellen?\b|\bmotivationsschreiben|\bvorstellungsgespr/i, "bewerbung"],
+  [/\bzivi|\bschul(?!den|ter)|\bschüler|\bklasse|\beltern(abend|rat|brief|gespr|info)|\blehrer|\blehrperson|\blektion|\babsenz|\bzeugnis|\bgersag/i, "zivi"],
   [/\broblox|\bvault runner|\broguelike|\bcoding|\bgithub|\bprogrammier|\bcode\b/i, "projekte"],
   [/\brechnung|\bversicherung|\bvertrag|\bsteuer|\bkrankenkasse/i, "privat"]
 ];
@@ -814,6 +814,32 @@ function renderHeute(v, today){
     for (const p of (b.starCanGo || [])){
       notes.push(el("div", {class:"note"}, el("span", {class:"k", text:"Stern kann weg"}),
         el("span", {text:p.title + " ist erledigt, die Mail hat aber noch einen Stern."}),
+        p.url ? el("div", {class:"acts"}, el("a", {class:"btn small", href:p.url, target:"_blank", rel:"noopener", text:"In Gmail öffnen ↗"})) : null));
+    }
+    // Rechnungen: Mail nicht mehr im Posteingang → vermutlich bezahlt; erledigt, aber noch im Posteingang → kann archiviert werden
+    for (const p of (b.probablyPaid || [])){
+      const t = S.tasks.find(x => x.id === p.id);
+      if (!t || t.done || t.removed) continue;
+      const kopie = /rechnungskopie/i.test(t.title);
+      notes.push(el("div", {class:"note"}, el("span", {class:"k", text: kopie ? "Vermutlich erledigt" : "Vermutlich bezahlt"}),
+        el("span", {text:t.title + " – die Mail liegt nicht mehr als Rechnung im Posteingang." + (kopie ? "" : " Schon bezahlt? Dann abhaken.")}),
+        el("div", {class:"acts"}, el("button", {class:"btn small", type:"button", text: kopie ? "Abhaken" : "Bezahlt ✓",
+          onclick:() => setDone(t, true, kopie ? null : "Als bezahlt abgehakt.")}),
+          p.url ? el("a", {class:"btn small", href:p.url, target:"_blank", rel:"noopener", text:"In Gmail öffnen ↗"}) : null)));
+    }
+    for (const p of (b.invoiceNew || [])){
+      const t = S.tasks.find(x => x.id === p.id);
+      if (!t || t.removed) continue;
+      notes.push(el("div", {class:"note"}, el("span", {class:"k", text:"Neue Mail zu erledigter Rechnung"}),
+        el("span", {text:t.title + " ist abgehakt, im selben Mail-Verlauf kam aber eine neue Mail (Mahnung?). Bitte ansehen."}),
+        el("div", {class:"acts"}, p.url ? el("a", {class:"btn small", href:p.url, target:"_blank", rel:"noopener", text:"In Gmail öffnen ↗"}) : null,
+          t.done ? el("button", {class:"btn small", type:"button", text:"Wieder öffnen", onclick:() => setDone(t, false)}) : null)));
+    }
+    for (const p of (b.invoiceCanGo || [])){
+      const t = S.tasks.find(x => x.id === p.id);
+      if (!t || !t.done || t.removed) continue;
+      notes.push(el("div", {class:"note"}, el("span", {class:"k", text:"Mail kann archiviert werden"}),
+        el("span", {text:t.title + " ist erledigt, die Rechnung liegt aber noch im Posteingang."}),
         p.url ? el("div", {class:"acts"}, el("a", {class:"btn small", href:p.url, target:"_blank", rel:"noopener", text:"In Gmail öffnen ↗"})) : null));
     }
     if (notes.length) v.append(el("section", null, countH2("Aus dem Tagesstart", notes.length), el("div", {class:"notes"}, notes)));
@@ -1528,7 +1554,7 @@ async function connect(u, k){
   const prev = S.cfg; S.cfg = {u, k};
   try {
     const r = await api("load");
-    store.set(CFG_KEY, S.cfg); applyData(r.data || {}); swCfg(); loadMonth(ymd().slice(0, 7));
+    store.set(CFG_KEY, S.cfg); store.del(PUSHSYNC_KEY); applyData(r.data || {}); swCfg(); loadMonth(ymd().slice(0, 7)); pushResync();
     return null;
   } catch(e){ S.cfg = prev; return connText(e.code, e.detail); }
 }
