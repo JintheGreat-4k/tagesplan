@@ -16,10 +16,10 @@
 <style>
 /* Layout: eine ruhige Spalte (max. 640px) – Datum, Erfassen, Tabs; darunter Fokus, Termine, Listen. Bearbeiten als Blatt von unten. */
 :root{
-  --bg:#f2f4f3; --surface:#ffffff; --surface-2:#e8edeb; --ink:#14201b; --ink-2:#46544e; --ink-3:#77847e; --line:#d3dcd8;
+  --bg:#f2f4f3; --surface:#ffffff; --surface-2:#e8edeb; --ink:#14201b; --ink-2:#46544e; --ink-3:#66726c; --line:#d3dcd8;
   --accent:#1c5a78; --accent-ink:#ffffff; --accent-soft:#d9e9f1;
   --late:#b3261e; --late-soft:#fbe3df; --today:#8f5300; --today-soft:#fbeed5; --ok:#2e7a49; --ok-ink:#ffffff;
-  --a-inbox:#7d8580; --a-zivi:#2a5fb5; --a-bewerbung:#7646ad; --a-pfadi:#2e7a49; --a-projekte:#b4531c; --a-privat:#55626c;
+  --a-inbox:#646d68; --a-zivi:#2a5fb5; --a-bewerbung:#7646ad; --a-pfadi:#277042; --a-projekte:#a54a15; --a-privat:#0b7280;
   --shadow:0 10px 30px rgba(20,32,27,.16);
   --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
@@ -31,7 +31,7 @@
     --bg:#0e1412; --surface:#161e1b; --surface-2:#202a26; --ink:#e6eeea; --ink-2:#a9b6b0; --ink-3:#7d8a84; --line:#2b3732;
     --accent:#72b6d8; --accent-ink:#08161d; --accent-soft:#18323f;
     --late:#ff8f85; --late-soft:#3b1c1a; --today:#f2b660; --today-soft:#35280f; --ok:#79cc96; --ok-ink:#0b1a11;
-    --a-inbox:#a2a9a5; --a-zivi:#86acef; --a-bewerbung:#bc9fe3; --a-pfadi:#79cc96; --a-projekte:#ee9c69; --a-privat:#a6b3bc;
+    --a-inbox:#a2a9a5; --a-zivi:#86acef; --a-bewerbung:#bc9fe3; --a-pfadi:#79cc96; --a-projekte:#ee9c69; --a-privat:#5cc6cf;
     --shadow:0 10px 30px rgba(0,0,0,.5);
     color-scheme:dark;
   }
@@ -40,7 +40,7 @@
   --bg:#0e1412; --surface:#161e1b; --surface-2:#202a26; --ink:#e6eeea; --ink-2:#a9b6b0; --ink-3:#7d8a84; --line:#2b3732;
   --accent:#72b6d8; --accent-ink:#08161d; --accent-soft:#18323f;
   --late:#ff8f85; --late-soft:#3b1c1a; --today:#f2b660; --today-soft:#35280f; --ok:#79cc96; --ok-ink:#0b1a11;
-  --a-inbox:#a2a9a5; --a-zivi:#86acef; --a-bewerbung:#bc9fe3; --a-pfadi:#79cc96; --a-projekte:#ee9c69; --a-privat:#a6b3bc;
+  --a-inbox:#a2a9a5; --a-zivi:#86acef; --a-bewerbung:#bc9fe3; --a-pfadi:#79cc96; --a-projekte:#ee9c69; --a-privat:#5cc6cf;
   --shadow:0 10px 30px rgba(0,0,0,.5);
   color-scheme:dark;
 }
@@ -90,19 +90,37 @@ h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,8vw,42px);l
 form.add{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px}
 .add-row{display:flex;gap:8px}
 .add-row input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px}
-.add-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.add-line{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:start}
+.add-line>.lbl{font-size:13px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;line-height:28px}
+.dueline{display:flex;flex-wrap:nowrap;gap:8px;align-items:center;min-width:0}
+.dueline #add-more{flex:none}
+.dueline .spacer{flex:1}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.pick{--ac:var(--a-inbox);border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 10px;font-size:14px;line-height:20px;color:var(--ink-2)}
-.pick[aria-pressed="true"]{border-color:var(--ac);color:var(--ac);background:color-mix(in srgb,var(--ac) 13%,transparent);font-weight:700}
-.duechip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);padding:3px 4px 3px 10px;font-size:14px;font-variant-numeric:tabular-nums}
-.duechip button{border:0;background:transparent;color:inherit;width:22px;height:22px;border-radius:50%;padding:0;line-height:1}
+.pick{--ac:var(--a-inbox);display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 10px;font-size:14px;line-height:20px;color:var(--ink-2)}
+.pick::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ac);flex:none}
+.pick[aria-pressed="true"]{border-color:var(--ac);background:var(--ac);color:var(--surface);font-weight:700}
+.pick[aria-pressed="true"]::before{background:currentColor}
+.duechip{position:relative;min-width:0;display:inline-flex;align-items:center;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:14px;line-height:20px;font-variant-numeric:tabular-nums}
+.duechip.nodue{background:transparent;border:1px dashed var(--line);color:var(--ink-2)}
+.duechip .pickdate{border:0;background:transparent;color:inherit;padding:3px 10px;border-radius:999px;font-size:14px;line-height:20px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.duechip .x{border:0;background:transparent;color:inherit;width:26px;height:26px;border-radius:50%;padding:0;margin-left:-6px;line-height:1;font-size:16px}
+.duechip input[type="date"].vh{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.duechip input[type="date"]:not(.vh){border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:4px 8px;margin-left:4px}
 .hint{margin:0;font-size:13px;color:var(--ink-3)}
+.hint.mailhint{font-size:13px}
+
+/* Filter */
+.filterbar{display:flex;flex-direction:column;gap:8px}
+.filterline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0;font-size:14px;color:var(--ink-2)}
+.filterline .late{color:var(--late);font-weight:700}
+.chips>.lbl{font-size:13px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;line-height:28px;margin-right:2px}
+.linkbtn{border:0;background:transparent;color:var(--accent);padding:2px 0;font-size:14px;text-decoration:underline;text-underline-offset:2px}
 
 /* Tabs */
 .tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface-2);box-shadow:0 0 0 6px var(--bg)}
 .tabs button{flex:1;min-width:0;border:0;background:transparent;border-radius:999px;padding:8px 4px;font-size:14px;color:var(--ink-2);white-space:nowrap}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.tabs .count{font-variant-numeric:tabular-nums;color:var(--ink-3);font-weight:400;margin-left:4px}
+.tabs .count{font-variant-numeric:tabular-nums;color:var(--ink-2);font-weight:400;margin-left:4px}
 
 /* Abschnitte */
 #view{display:flex;flex-direction:column;gap:22px}
@@ -114,7 +132,8 @@ h2 .n{font-family:var(--f-body);font-size:14px;color:var(--ink-3);font-weight:40
 
 /* Liste */
 .list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.row{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 14px;border-top:1px solid var(--line);align-items:start}
+.row{--ac:var(--a-inbox);display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 14px;border-top:1px solid var(--line);align-items:start;box-shadow:inset 4px 0 0 var(--ac)}
+.row.done{box-shadow:inset 4px 0 0 var(--line)}
 .row:first-child{border-top:0}
 .row.focus{grid-template-columns:28px auto 1fr}
 .rank{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:24px;color:var(--accent);text-align:center;font-variant-numeric:tabular-nums}
@@ -135,6 +154,9 @@ h2 .n{font-family:var(--f-body);font-size:14px;color:var(--ink-3);font-weight:40
 .due.today{color:var(--today);background:var(--today-soft);font-weight:700}
 .nextb{color:var(--accent);background:var(--accent-soft)}
 .popchip{color:var(--ink-2);background:var(--surface-2);font-variant-numeric:tabular-nums}
+.paid{border:1px solid var(--ok);background:transparent;color:var(--ok);border-radius:999px;padding:3px 11px;margin-right:6px;font-size:13px;line-height:20px;font-weight:700}
+.paid:hover{background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.adot{--ac:var(--a-inbox);width:10px;height:10px;border-radius:50%;background:var(--ac);flex:none;align-self:center}
 .src{color:var(--ink-3);font-size:13px}
 .src a{text-decoration:none}
 .src a:hover{text-decoration:underline}
@@ -178,7 +200,6 @@ button.ev:hover{background:var(--surface-2)}
 .note:first-child{border-top:0}
 .note .k{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
 .note .acts{display:flex;flex-wrap:wrap;gap:8px}
-.newline{margin:0;font-size:14px;color:var(--ink-2)}
 
 /* Blätter von unten (Bearbeiten, Einstellungen) */
 #backdrop{position:fixed;inset:0;background:rgba(10,16,14,.42);z-index:20}
@@ -210,7 +231,7 @@ button.ev:hover{background:var(--surface-2)}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 12px 10px 16px;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px);width:max-content;box-shadow:var(--shadow);font-size:15px}
 #toast button{border:0;background:transparent;color:var(--accent-soft);font-weight:700;padding:4px 6px}
 
-@media (max-width:420px){ .ev{grid-template-columns:90px 1fr;gap:10px} .add-row{flex-direction:column} .add-row .primary{width:100%} }
+@media (max-width:420px){ .ev{grid-template-columns:90px 1fr;gap:10px} .add-row .primary{padding:10px 12px} }
 @media (prefers-reduced-motion:reduce){ .spin{animation-duration:3s} }
 </style>
 </head>
@@ -245,9 +266,18 @@ button.ev:hover{background:var(--surface-2)}
         <input id="add-input" aria-label="Neue Aufgabe" placeholder="Neue Aufgabe, z. B. «Lagerrückblick versenden bis Freitag»" maxlength="240" enterkeyhint="done">
         <button class="primary" id="add-btn" type="submit">Erfassen</button>
       </div>
-      <div class="add-meta">
-        <div class="chips" id="add-areas" role="group" aria-label="Bereich"></div>
-        <span class="duechip" id="add-due" hidden><span id="add-due-t"></span><button type="button" id="add-due-x" aria-label="Frist entfernen">×</button></span>
+      <div class="add-line"><span class="lbl" id="add-areas-l">Bereich</span>
+        <div class="chips" id="add-areas" role="group" aria-labelledby="add-areas-l"></div>
+      </div>
+      <div class="add-line"><span class="lbl">Frist</span>
+        <div class="dueline">
+          <span class="duechip" id="add-due">
+            <button type="button" class="pickdate" id="add-due-b"></button><button type="button" class="x" id="add-due-x" aria-label="Frist entfernen" hidden>×</button>
+            <input type="date" id="add-date" class="vh" tabindex="-1" aria-hidden="true" aria-label="Frist wählen">
+          </span>
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="add-more" aria-label="Mehr Angaben: Popup und Nächster Schritt">Mehr …</button>
+        </div>
       </div>
       <p class="hint" id="add-hint" hidden>Zivi: nur neutrale Stichworte. Keine Namen von Schülerinnen, Schülern oder Eltern, keine Noten.</p>
     </form>
@@ -259,7 +289,12 @@ button.ev:hover{background:var(--surface-2)}
       <button role="tab" type="button" id="tab-erledigt" aria-selected="false" data-tab="erledigt">Erledigt</button>
     </nav>
 
-    <main id="view" aria-live="polite">
+    <div class="filterbar" id="filterbar" hidden>
+      <div class="chips" id="filter-areas" role="group" aria-labelledby="filter-l"></div>
+      <p class="filterline" id="filterline" hidden></p>
+    </div>
+
+    <main id="view">
       <p class="empty">Aufgaben werden geladen …</p>
     </main>
   </div>
@@ -267,9 +302,10 @@ button.ev:hover{background:var(--surface-2)}
 
 <div id="backdrop" hidden></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h" hidden>
-  <h3 id="sheet-h">Aufgabe bearbeiten</h3>
+  <h3 id="sheet-h" tabindex="-1">Aufgabe bearbeiten</h3>
   <div class="field"><label for="ed-title">Aufgabe</label><textarea id="ed-title" rows="2" maxlength="240"></textarea></div>
-  <div class="field"><span class="lbl">Bereich</span><div class="chips" id="ed-areas" role="group" aria-label="Bereich"></div></div>
+  <div class="field"><span class="lbl">Bereich</span><div class="chips" id="ed-areas" role="group" aria-label="Bereich"></div>
+    <p class="hint" id="ed-hint" hidden>Zivi: nur neutrale Stichworte. Keine Namen von Schülerinnen, Schülern oder Eltern, keine Noten.</p></div>
   <div class="field"><label for="ed-due">Frist</label>
     <div class="daterow"><input type="date" id="ed-due"><button type="button" class="ghost" id="ed-nodue">Kein Datum</button></div>
   </div>
@@ -277,11 +313,14 @@ button.ev:hover{background:var(--surface-2)}
     <div class="daterow"><input type="date" id="ed-rd" aria-label="Popup am"><input type="time" id="ed-rt" step="300" aria-label="Popup um"><button type="button" class="ghost" id="ed-nor">Keins</button></div>
   </div>
   <label class="check"><input type="checkbox" id="ed-next"> Nächster Schritt in diesem Bereich</label>
-  <p class="src" id="ed-src" hidden></p>
+  <div class="field" id="ed-src-f" hidden>
+    <p class="src" id="ed-src"></p>
+    <p class="hint mailhint" id="ed-mailhint">Erledigt? In der Liste den Kreis links antippen. Die Mail archivierst du bei Bedarf selbst in Gmail, die App ändert dort nichts.</p>
+  </div>
   <div class="sheet-acts" id="ed-acts">
     <button type="button" class="primary" id="ed-save">Speichern</button>
     <button type="button" class="ghost" id="ed-cancel">Abbrechen</button>
-    <span class="spacer"></span>
+    <span class="spacer" id="ed-spacer"></span>
     <button type="button" class="danger" id="ed-remove">Entfernen</button>
   </div>
   <div class="confirm" id="ed-confirm" hidden>
@@ -355,7 +394,7 @@ button.ev:hover{background:var(--surface-2)}
     <p>Verbindung auf diesem Gerät trennen? Die Aufgaben bleiben in der Google-Tabelle. Danach musst du dieses Gerät neu einrichten.</p>
     <div class="sheet-acts"><button type="button" class="danger solid" id="set-confirm-yes">Trennen</button><button type="button" class="ghost" id="set-confirm-no">Abbrechen</button></div>
   </div>
-  <p class="hint">Marcs Tagesplan · Version 2</p>
+  <p class="hint">Marcs Tagesplan · Version 2.1</p>
 </div>
 
 <div id="toast" role="status" hidden><span id="toast-t"></span><button type="button" id="toast-a" hidden></button></div>
@@ -371,7 +410,7 @@ const AREAS = [
 const AREA_NAME = Object.fromEntries(AREAS.map(a => [a.id, a.name]));
 const AREA_IDS = AREAS.map(a => a.id);
 const CFG_KEY = "tagesplan.cfg", CACHE_KEY = "tagesplan.cache", TAB_KEY = "tagesplan.tab", CAL_KEY = "tagesplan.cal";
-const PUSH_KEY = "tagesplan.push", PUSHSYNC_KEY = "tagesplan.pushsync", SW_CFG = "tagesplan-cfg";
+const PUSH_KEY = "tagesplan.push", PUSHSYNC_KEY = "tagesplan.pushsync", SW_CFG = "tagesplan-cfg", FILTER_KEY = "tagesplan.filter", PUSHOFF_KEY = "tagesplan.pushoff", PUSHTRY_KEY = "tagesplan.pushtry";
 const URL_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#]+|macros)\/s\/[\w-]+\/exec$/;
 const QR_LIB = {src:"https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js", sri:"sha512-ZDSPMa/JM1D+7kdg2x3BsruQ6T/JpJo3jWDWkCZsP+5yVyp1KfESqLI+7RqB5k24F7p2cV7i2YHh/890y6P6Sw=="};
 
@@ -383,11 +422,15 @@ const store = {
 
 const S = {
   cfg:null, tasks:[], tasksLoaded:false, briefing:null, last:null, lastLoaded:false, sheetUrl:null,
-  loadedAt:0, cacheAt:null, loading:false, conn:null, pending:0, reloadAfter:false,
-  tab:"heute", add:{area:"inbox", manual:false, dueOff:false}, edit:null, syncing:false, autoTried:{}, installEvt:null,
-  settings:null, cal:{}, calMonth:null, calDay:null, ev:null
+  loadedAt:0, cacheAt:null, loading:false, conn:null, pending:0, reloadAfter:false, gen:0,
+  tab:"heute", filter:null, add:null, edit:null, syncing:false, autoTried:{}, installEvt:null,
+  settings:null, cal:{}, calMonth:null, calDay:null, ev:null, pushOff:false
 };
 { const t = store.get(TAB_KEY); if (["heute","kalender","bereiche","erledigt"].includes(t)) S.tab = t; }
+{ const f = store.get(FILTER_KEY); if (AREA_IDS.includes(f)) S.filter = f; }
+/* Erfassen: Bereich (von Hand oder geraten), Frist (von Hand, aus dem Text erkannt oder weggeklickt) */
+const freshAdd = () => ({area:S.filter || "inbox", manual:false, dueOff:false, dueSet:null, replaced:false});
+S.add = freshAdd();
 
 /* ---------- Datum ---------- */
 const WD = ["So","Mo","Di","Mi","Do","Fr","Sa"];
@@ -470,25 +513,35 @@ function toast(text, actionLabel, action){
   $("toast-t").textContent = text;
   a.hidden = !actionLabel; a.textContent = actionLabel || "";
   a.onclick = actionLabel ? () => { t.hidden = true; action(); } : null;
+  placeToast();
   t.hidden = false; clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, actionLabel ? 6000 : 3500);
 }
+/* Auf dem Handy liegt die Tastatur über der Seite: den Toast darüber schieben, sonst sieht man «Erfasst … Ändern» nicht */
+function placeToast(){
+  const vv = window.visualViewport;
+  const off = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+  $("toast").style.bottom = off > 40 ? (off + 12) + "px" : "";
+}
+if (window.visualViewport){ visualViewport.addEventListener("resize", placeToast); visualViewport.addEventListener("scroll", placeToast); }
 
 /* ---------- Verbindung zum Google-Skript ---------- */
 function fail(code, detail){ const e = new Error(code); e.code = code; e.detail = detail; return e; }
 async function api(action, payload){
   if (!S.cfg) throw fail("not_configured");
   const ctrl = new AbortController();
+  // Das Zeitlimit gilt bis die ganze Antwort da ist, nicht nur bis zum Anfang
   const timer = setTimeout(() => ctrl.abort(), action === "sync" ? 330000 : 45000);
-  let res;
+  let res, txt = "", j = null;
   try {
-    res = await fetch(S.cfg.u, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, redirect:"follow", cache:"no-store", signal:ctrl.signal,
-      body:JSON.stringify(Object.assign({key:S.cfg.k, action}, payload || {}))});
-  } catch(e){
-    throw fail(navigator.onLine === false ? "offline" : (e && e.name === "AbortError") ? "timeout" : "network");
+    try {
+      res = await fetch(S.cfg.u, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, redirect:"follow", cache:"no-store", signal:ctrl.signal,
+        body:JSON.stringify(Object.assign({key:S.cfg.k, action}, payload || {}))});
+    } catch(e){
+      throw fail(navigator.onLine === false ? "offline" : (e && e.name === "AbortError") ? "timeout" : "network");
+    }
+    try { txt = await res.text(); j = JSON.parse(txt); } catch(e){ if (ctrl.signal.aborted) throw fail("timeout"); }
   } finally { clearTimeout(timer); }
-  let txt = "", j = null;
-  try { txt = await res.text(); j = JSON.parse(txt); } catch(e) {}
   if (!j || typeof j !== "object"){
     // Meist eine Fehlerseite von Google: den Anfang des Textes zeigen, damit man den Grund sieht
     const kurz = txt.replace(/<(style|script)[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
@@ -519,83 +572,174 @@ function applyData(d){
   S.tasksLoaded = true; S.lastLoaded = true; S.loadedAt = Date.now(); S.cacheAt = null; S.conn = null;
   persist();
 }
+/* Daten vom Skript übernehmen, aber nur, wenn seit dem Abschicken keine Änderung begonnen oder geendet hat. Sonst frisch laden. */
+function takeData(d, gen){
+  if (S.pending > 0){ S.reloadAfter = true; return; }
+  if (gen !== S.gen){ setTimeout(reload, 0); return; }
+  applyData(d || {});
+}
 async function reload(){
   if (!S.cfg || S.loading) return;
   S.loading = true; renderSync(ymd());
+  const gen = S.gen;
   try {
     const r = await api("load");
-    if (S.pending > 0) S.reloadAfter = true; else applyData(r.data || {});
+    takeData(r.data, gen);
     S.conn = null;
   } catch(e){ S.conn = e.code || "network"; }
   S.loading = false; render(); maybeAuto();
   if (!S.conn){ loadMonth(ymd().slice(0, 7)); pushResync(); }
 }
-function settled(){ S.pending--; persist(); render(); if (!S.pending && S.reloadAfter){ S.reloadAfter = false; reload(); } }
+function settled(){ S.pending--; S.gen++; persist(); render(); if (!S.pending && S.reloadAfter){ S.reloadAfter = false; reload(); } }
+
+/* Pro Aufgabe läuft immer nur eine Anfrage (Erfassen oder Ändern), die nächste wartet auf die vorige.
+   Der Wert sagt, ob es die Aufgabe danach gibt (false: Erfassen gescheitert). */
+const chain = new Map();
+function enqueue(id){
+  const prev = chain.get(id);
+  let release; const mine = new Promise(r => { release = r; });
+  chain.set(id, mine);
+  return {prev, mine, latest:() => chain.get(id) === mine, done:v => { release(v); if (chain.get(id) === mine) chain.delete(id); }};
+}
 
 /* Änderung sofort anzeigen, dann speichern. Klappt das nicht, wird sie zurückgenommen. */
 async function mutate(id, fields){
   const t = S.tasks.find(x => x.id === id);
   const before = t ? Object.assign({}, t) : null;
   if (t){ Object.assign(t, fields); persist(); render(); }
-  S.pending++;
+  S.pending++; S.gen++;
+  const q = enqueue(id);
+  let exists = true;
   try {
+    if (q.prev && !(await q.prev)){ exists = false; return false; } // Erfassen ist gescheitert, die Aufgabe gibt es nicht
     const r = await api("update", {id, fields});
-    const cur = S.tasks.find(x => x.id === id);
-    if (cur) Object.assign(cur, r.task); else if (r.task) S.tasks.push(r.task);
+    // Kam inzwischen eine neuere Änderung dazu, gilt deren Stand
+    if (q.latest()){ const cur = S.tasks.find(x => x.id === id); if (cur) Object.assign(cur, r.task); else if (r.task) S.tasks.push(r.task); }
     return true;
   } catch(e){
     const cur = S.tasks.find(x => x.id === id);
-    if (cur && before) for (const k of Object.keys(fields)) cur[k] = before[k];
+    if (q.latest()){ if (cur && before) for (const k of Object.keys(fields)) cur[k] = before[k]; }
+    else S.reloadAfter = true; // nicht über eine neuere Änderung zurücknehmen, sondern frisch laden
     toast("Nicht gespeichert. " + connText(e.code, e.detail));
     return false;
-  } finally { settled(); }
+  } finally { q.done(exists); settled(); }
 }
+/* Erfassen. Ergebnis {ok} oder {ok:false, err, local}: local ist der Stand vor dem Fehler (inkl. Änderungen, die gewartet haben). */
 async function addTask(task){
-  S.tasks.push(Object.assign({done:false, doneAt:null, next:false, removed:false, src:{type:"manual"}, created:new Date().toISOString()}, task));
-  persist(); render(); S.pending++;
+  const ex = S.tasks.find(x => x.id === task.id); // schon geladen (zweiter Versuch nach verlorener Antwort)
+  if (ex) Object.assign(ex, task, {removed:false});
+  else S.tasks.push(Object.assign({done:false, doneAt:null, next:false, removed:false, src:{type:"manual"}, created:new Date().toISOString(), remind:null}, task));
+  persist(); render(); S.pending++; S.gen++;
+  const q = enqueue(task.id);
+  let ok = false;
   try {
     const r = await api("add", {task});
-    const i = S.tasks.findIndex(x => x.id === task.id);
-    if (i >= 0 && r.task) S.tasks[i] = r.task;
-    return true;
+    const cur = S.tasks.find(x => x.id === task.id);
+    ok = true;
+    if (cur && r.task){
+      // Die angezeigte Aufgabe bleibt, sie kann inzwischen geändert worden sein. Vom Skript kommen nur Quelle und Zeitpunkt.
+      Object.assign(cur, {src:r.task.src || cur.src, created:r.task.created || cur.created});
+      // Was das Skript anders gespeichert hat (ältere Skripte übernehmen «Nächster Schritt» nicht,
+      // ein zweiter Versuch findet die Fassung vom ersten), gleich nachtragen
+      const diff = {};
+      for (const k of ["title", "area", "due", "remind", "next"]){
+        const a = k === "next" ? !!r.task[k] : (r.task[k] || null), b = k === "next" ? !!cur[k] : (cur[k] || null);
+        if (a !== b) diff[k] = cur[k];
+      }
+      if (Object.keys(diff).length){ q.done(true); mutate(task.id, diff); }
+    }
+    return {ok:true};
   } catch(e){
-    S.tasks = S.tasks.filter(x => x.id !== task.id);
-    toast("Nicht gespeichert. " + connText(e.code, e.detail));
-    return false;
-  } finally { settled(); }
+    const local = S.tasks.find(x => x.id === task.id);
+    if (!ex) S.tasks = S.tasks.filter(x => x.id !== task.id);
+    return {ok:false, err:e, local: local ? Object.assign({}, local) : null};
+  } finally { q.done(ok); settled(); }
 }
-function setDone(t, done){
-  if (done) toast("Erledigt: " + t.title, "Rückgängig", () => setDone(t, false));
+function setDone(t, done, msg){
+  if (done) toast(msg || "Erledigt: " + t.title, "Rückgängig", () => setDone(t, false));
   mutate(t.id, {done, doneAt: done ? ymd() : null});
 }
 
 /* ---------- Ableitungen ---------- */
+const areaOf = t => AREA_IDS.includes(t.area) ? t.area : "inbox";
+const shown = t => !S.filter || areaOf(t) === S.filter;
 const open = () => S.tasks.filter(t => !t.done && !t.removed);
+// Rechnung zum Zahlen (nicht «Rechnungskopie … prüfen»)
+const isInvoice = t => !!(t.src && t.src.type === "mail" && t.src.kind === "invoice") && !/rechnungskopie/i.test(t.title || "");
+function createdOn(t, day){ if (!t.created) return false; const d = new Date(t.created); return !isNaN(d) && ymd(d) === day; }
 function byDue(a, b){ const ad = a.due || "9999-99-99", bd = b.due || "9999-99-99"; if (ad !== bd) return ad < bd ? -1 : 1; if (!!a.next !== !!b.next) return a.next ? -1 : 1; return (a.created || "") < (b.created || "") ? -1 : 1; }
-function focusList(){ const o = open().filter(t => t.area !== "inbox"); const dated = o.filter(t => t.due).sort(byDue); const nx = o.filter(t => !t.due && t.next).sort(byDue); return dated.concat(nx).slice(0, 3); }
+function focusList(){ const o = open().filter(t => shown(t) && areaOf(t) !== "inbox"); const dated = o.filter(t => t.due).sort(byDue); const nx = o.filter(t => !t.due && t.next).sort(byDue); return dated.concat(nx).slice(0, 3); }
 
 /* ---------- Zeilen ---------- */
+const stop = e => e.stopPropagation();
+let rowSeq = 0;
 function taskRow(t, today, opts = {}){
+  const area = areaOf(t);
   const tick = el("button", {class:"tick" + (t.done ? " on" : ""), type:"button", "aria-label": (t.done ? "Wieder öffnen: " : "Abhaken: ") + t.title, onclick:() => setDone(t, !t.done)});
   tick.innerHTML = CHECK;
   const meta = el("div", {class:"meta"});
-  if (!opts.hideArea) meta.append(el("span", {class:"chip area", style:"--ac:var(--a-" + (AREA_IDS.includes(t.area) ? t.area : "inbox") + ")", text:AREA_NAME[t.area] || "Eingang"}));
+  if (!opts.hideArea) meta.append(el("span", {class:"chip area", style:"--ac:var(--a-" + area + ")", text:AREA_NAME[area]}));
   if (t.due && !t.done){ const cls = t.due < today ? " late" : t.due === today ? " today" : ""; meta.append(el("span", {class:"chip due" + cls, text:(t.due < today ? "überfällig · " : "") + dueLabel(t.due, today)})); }
   if (t.done && t.doneAt) meta.append(el("span", {class:"chip due", text:"erledigt " + dueLabel(t.doneAt, today)}));
   if (t.next && !t.done) meta.append(el("span", {class:"chip nextb", text:"Nächster Schritt"}));
   if (t.remind && !t.done && t.remind >= nowLocal()) meta.append(el("span", {class:"chip popchip", text:"Popup " + dueLabel(t.remind.slice(0, 10), today) + " " + t.remind.slice(11, 16)}));
+  if (isInvoice(t) && !t.done) meta.append(el("button", {class:"paid", type:"button", text:"Bezahlt ✓", "aria-label":"Als bezahlt abhaken: " + t.title, onkeydown:stop,
+    onclick:e => { e.stopPropagation(); setDone(t, true, "Bezahlt und abgehakt. Die Mail kannst du in Gmail archivieren."); }}));
   const s = t.src || {};
-  if (s.type === "mail" && s.url) meta.append(el("span", {class:"src"}, el("a", {href:s.url, target:"_blank", rel:"noopener", text:"Mail öffnen ↗", onclick:e => e.stopPropagation()})));
+  if (s.type === "mail" && s.url) meta.append(el("span", {class:"src"}, el("a", {href:s.url, target:"_blank", rel:"noopener", text:"Mail öffnen ↗", onclick:stop, onkeydown:stop})));
   else if (s.type === "cal" && s.label) meta.append(el("span", {class:"src", text:"Kalender: " + s.label}));
-  const body = el("div", {class:"body", role:"button", tabindex:"0", "aria-label":"Bearbeiten: " + t.title,
+  const mid = "m" + (++rowSeq);
+  if (meta.childNodes.length) meta.id = mid;
+  const body = el("div", {class:"body", role:"button", tabindex:"0", "aria-label":"Bearbeiten: " + t.title, "aria-describedby": meta.childNodes.length ? mid : null,
     onclick:() => openEditor(t), onkeydown:e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openEditor(t); } }},
     el("span", {class:"title", text:t.title}), meta.childNodes.length ? meta : null);
-  const row = el("div", {class:"row" + (t.done ? " done" : "") + (opts.rank ? " focus" : "")});
+  const row = el("div", {class:"row" + (t.done ? " done" : "") + (opts.rank ? " focus" : ""), style:"--ac:var(--a-" + area + ")"});
   if (opts.rank) row.append(el("span", {class:"rank", "aria-hidden":"true", text:opts.rank}));
   row.append(tick, body);
   return row;
 }
 function listOf(tasks, today, opts){ return el("div", {class:"list"}, tasks.map((t, i) => taskRow(t, today, Object.assign({}, opts, opts && opts.ranked ? {rank:String(i+1)} : {})))); }
+const countH2 = (label, n, ac) => el("h2", null, ac ? el("i", {class:"adot", style:"--ac:var(--a-" + ac + ")", "aria-hidden":"true"}) : null, label, n != null ? el("span", {class:"n", text:String(n)}) : null);
+
+/* ---------- Bereich-Chips (Erfassen, Bearbeiten, Filter) ---------- */
+function areaChips(box, sel, onPick, opts = {}){
+  const list = opts.withAll ? [{id:null, name:"Alle"}].concat(AREAS) : AREAS;
+  // Schon gebaut: nur den Zustand nachführen, damit der Fokus auf dem angetippten Chip bleibt
+  const old = box.querySelectorAll("button.pick");
+  if (old.length === list.length){ old.forEach((b, i) => b.setAttribute("aria-pressed", String(sel === list[i].id))); return; }
+  box.replaceChildren();
+  if (opts.label) box.append(el("span", {class:"lbl", id:opts.label.id, text:opts.label.text}));
+  for (const a of list) box.append(el("button", {type:"button", class:"pick", style:"--ac:" + (a.id ? "var(--a-" + a.id + ")" : "var(--ink-2)"),
+    "aria-pressed":String(sel === a.id), text:a.name, onclick:() => onPick(a.id),
+    // Beim Erfassen bleibt die Tastatur offen, wenn man einen Bereich antippt
+    onmousedown: opts.keepFocus ? e => { if (document.activeElement === $("add-input")) e.preventDefault(); } : null}));
+}
+
+/* ---------- Filter ---------- */
+function setFilter(id){
+  S.filter = id;
+  if (id) store.set(FILTER_KEY, id); else store.del(FILTER_KEY);
+  // Ein gewählter Filter wird zum Bereich beim Erfassen, solange man dort nichts von Hand gewählt hat
+  if (!S.add.manual){ const g = guessArea($("add-input").value); S.add.area = g || id || "inbox"; renderAddAreas(); }
+  render();
+}
+function renderFilter(){
+  const on = S.tasksLoaded && S.tab !== "kalender";
+  $("filterbar").hidden = !on;
+  if (!on) return;
+  areaChips($("filter-areas"), S.filter, id => setFilter(id === S.filter ? null : id), {withAll:true, label:{id:"filter-l", text:"Filter"}});
+  const line = $("filterline"); line.replaceChildren();
+  line.hidden = !S.filter;
+  if (!S.filter) return;
+  const today = ymd();
+  const onHeute = t => (t.due && t.due <= addDays(today, 7)) || areaOf(t) === "inbox" || t.next || createdOn(t, today);
+  const pool = S.tab === "erledigt" ? S.tasks.filter(t => t.done && !t.removed) : S.tab === "heute" ? open().filter(onHeute) : open();
+  const hidden = pool.filter(t => !shown(t));
+  const late = S.tab === "erledigt" ? 0 : hidden.filter(t => t.due && t.due <= today).length;
+  line.append(...[el("span", {text:"Filter: " + AREA_NAME[S.filter] + (hidden.length ? " · " + hidden.length + " ausgeblendet" : "")}),
+    late ? el("span", {class:"late", text:"davon " + late + " fällig"}) : null,
+    el("button", {type:"button", class:"linkbtn", text:"Alle zeigen", onclick:() => setFilter(null)})].filter(Boolean));
+}
 
 /* ---------- Ansichten ---------- */
 function render(){
@@ -609,6 +753,7 @@ function render(){
   const o = open();
   $("cnt-open").textContent = S.tasksLoaded ? String(o.length) : "";
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === S.tab));
+  renderFilter();
   const v = $("view"); v.replaceChildren();
   if (!S.tasksLoaded){ v.append(el("p", {class:"empty", text: S.conn ? connText(S.conn) + " Die Aufgaben erscheinen, sobald die Verbindung klappt." : "Aufgaben werden geladen …"})); return; }
   if (S.tab === "heute") renderHeute(v, today);
@@ -619,13 +764,25 @@ function render(){
 
 function renderHeute(v, today){
   const b = S.briefing && S.briefing.date === today ? S.briefing : null;
+  const vis = open().filter(shown);
   const focus = focusList();
   const fIds = new Set(focus.map(t => t.id));
+  const name = S.filter ? AREA_NAME[S.filter] : "";
 
-  const fs = el("section", null, el("h2", null, "Fokus"));
-  if (focus.length) fs.append(listOf(focus, today, {ranked:true}));
-  else fs.append(el("p", {class:"empty", text: open().length ? "Nichts mit Frist. Wähle unter «Bereiche» etwas aus oder setze eine Frist." : "Keine offenen Aufgaben. Oben eine erfassen oder den Tagesstart ausführen."}));
-  v.append(fs);
+  if (S.pushOff) v.append(el("div", {class:"notes"}, el("div", {class:"note"},
+    el("span", {class:"k", text:"Popups"}),
+    el("span", {text:"Popups sind auf diesem Gerät aus. Termin- und Aufgaben-Popups kommen hier nicht an."}),
+    el("div", {class:"acts"}, el("button", {class:"btn small", type:"button", text:"Einschalten …", onclick:() => $("gear").click()}),
+      el("button", {class:"btn small", type:"button", text:"Nicht mehr zeigen", onclick:() => { store.set(PUSHOFF_KEY, true); pushCheck(); }})))));
+
+  // Mit Filter «Eingang» gibt es keinen Fokus: Eingang-Aufgaben stehen unten
+  if (S.filter !== "inbox"){
+    const fs = el("section", null, el("h2", null, "Fokus"));
+    if (focus.length) fs.append(listOf(focus, today, {ranked:true}));
+    else fs.append(el("p", {class:"empty", text: vis.length ? "Nichts mit Frist" + (name ? " in " + name : "") + ". Beim Erfassen eine Frist wählen oder bei einer Aufgabe «Nächster Schritt» anhaken."
+      : name ? "Keine offenen Aufgaben in " + name + "." : "Keine offenen Aufgaben. Oben eine erfassen oder den Tagesstart ausführen."}));
+    v.append(fs);
+  }
 
   const ts = el("section", null, el("div", {class:"h2row"}, el("h2", null, "Termine heute"),
     el("button", {class:"btn small", type:"button", text:"+ Termin", onclick:() => openEvEditor(null, today)})));
@@ -659,26 +816,32 @@ function renderHeute(v, today){
         el("span", {text:p.title + " ist erledigt, die Mail hat aber noch einen Stern."}),
         p.url ? el("div", {class:"acts"}, el("a", {class:"btn small", href:p.url, target:"_blank", rel:"noopener", text:"In Gmail öffnen ↗"})) : null));
     }
-    if (notes.length) v.append(el("section", null, el("h2", null, "Aus dem Tagesstart", el("span", {class:"n", text:String(notes.length)})), el("div", {class:"notes"}, notes)));
+    if (notes.length) v.append(el("section", null, countH2("Aus dem Tagesstart", notes.length), el("div", {class:"notes"}, notes)));
   }
 
-  const due = open().filter(t => t.due && t.due <= today && !fIds.has(t.id)).sort(byDue);
-  if (due.length) v.append(el("section", null, el("h2", null, "Auch fällig", el("span", {class:"n", text:String(due.length)})), listOf(due, today)));
-  const week = open().filter(t => t.due && t.due > today && t.due <= addDays(today, 7) && !fIds.has(t.id)).sort(byDue);
-  if (week.length) v.append(el("section", null, el("h2", null, "Nächste 7 Tage", el("span", {class:"n", text:String(week.length)})), listOf(week, today)));
-  const inbox = open().filter(t => t.area === "inbox").sort(byDue);
-  if (inbox.length) v.append(el("section", null, el("h2", null, "Eingang", el("span", {class:"n", text:String(inbox.length)})),
-    el("p", {class:"sub", text:"Noch keinem Bereich zugeordnet. Antippen und Bereich wählen."}), listOf(inbox, today, {hideArea:true})));
-  if (b && b.created && b.created.length) v.append(el("p", {class:"newline", text:"Heute neu erfasst: " + b.created.map(c => c.title).join(" · ")}));
+  const seen = new Set(fIds);
+  const due = vis.filter(t => t.due && t.due <= today && !seen.has(t.id)).sort(byDue);
+  due.forEach(t => seen.add(t.id));
+  if (due.length) v.append(el("section", null, countH2("Auch fällig", due.length), listOf(due, today)));
+  const week = vis.filter(t => t.due && t.due > today && t.due <= addDays(today, 7) && !seen.has(t.id)).sort(byDue);
+  week.forEach(t => seen.add(t.id));
+  if (week.length) v.append(el("section", null, countH2("Nächste 7 Tage", week.length), listOf(week, today)));
+  const inbox = vis.filter(t => areaOf(t) === "inbox").sort(byDue);
+  inbox.forEach(t => seen.add(t.id));
+  if (inbox.length) v.append(el("section", null, countH2("Eingang", inbox.length, "inbox"),
+    el("p", {class:"sub", text:"Noch keinem Bereich zugeordnet. Antippen, um Bereich und Frist zu wählen."}), listOf(inbox, today, {hideArea:true})));
+  // Heute erfasst, aber oben nirgends sichtbar (keine Frist, kein Eingang): damit nichts «verschwindet»
+  const fresh = vis.filter(t => !seen.has(t.id) && createdOn(t, today)).sort(byDue);
+  if (fresh.length) v.append(el("section", null, countH2("Heute erfasst", fresh.length), listOf(fresh, today)));
 }
 
 function renderBereiche(v, today){
-  const o = open();
-  if (!o.length){ v.append(el("p", {class:"empty", text:"Keine offenen Aufgaben."})); return; }
+  const o = open().filter(shown);
+  if (!o.length){ v.append(el("p", {class:"empty", text: S.filter ? "Keine offenen Aufgaben in " + AREA_NAME[S.filter] + "." : "Keine offenen Aufgaben."})); return; }
   for (const a of AREAS){
-    const ts = o.filter(t => (AREA_IDS.includes(t.area) ? t.area : "inbox") === a.id).sort(byDue);
+    const ts = o.filter(t => areaOf(t) === a.id).sort(byDue);
     if (!ts.length) continue;
-    const sec = el("section", null, el("h2", null, a.name, el("span", {class:"n", text:String(ts.length)})));
+    const sec = el("section", null, countH2(a.name, ts.length, a.id));
     if (a.id === "zivi") sec.append(el("p", {class:"sub", text:"Nur neutrale Stichworte. Details bleiben in Microsoft 365."}));
     sec.append(listOf(ts, today, {hideArea:true}));
     v.append(sec);
@@ -686,9 +849,9 @@ function renderBereiche(v, today){
 }
 
 function renderErledigt(v, today){
-  const d = S.tasks.filter(t => t.done && !t.removed).sort((a, b) => (b.doneAt || "") < (a.doneAt || "") ? -1 : (b.doneAt || "") > (a.doneAt || "") ? 1 : 0).slice(0, 60);
-  if (!d.length){ v.append(el("p", {class:"empty", text:"Noch nichts abgehakt. Abgehakte Aufgaben erscheinen hier und lassen sich wieder öffnen."})); return; }
-  v.append(el("section", null, el("h2", null, "Erledigt", el("span", {class:"n", text:String(d.length)})), listOf(d, today)));
+  const d = S.tasks.filter(t => t.done && !t.removed && shown(t)).sort((a, b) => (b.doneAt || "") < (a.doneAt || "") ? -1 : (b.doneAt || "") > (a.doneAt || "") ? 1 : 0).slice(0, 60);
+  if (!d.length){ v.append(el("p", {class:"empty", text: S.filter ? "Nichts Erledigtes in " + AREA_NAME[S.filter] + "." : "Noch nichts abgehakt. Abgehakte Aufgaben erscheinen hier und lassen sich wieder öffnen."})); return; }
+  v.append(el("section", null, countH2("Erledigt", d.length), listOf(d, today)));
 }
 
 /* ---------- Kalender ---------- */
@@ -994,9 +1157,10 @@ function renderSync(today){
 async function runSync(){
   if (!S.cfg || S.syncing) return;
   S.syncing = true; render();
+  const gen = S.gen;
   try {
     const r = await api("sync");
-    if (S.pending > 0) S.reloadAfter = true; else if (r.data) applyData(r.data);
+    if (r.data) takeData(r.data, gen);
     const res = r.result || {};
     if (res.busy){ toast("Der Tagesstart läuft gerade schon."); setTimeout(reload, 30000); }
     else toast(res.created ? "Tagesstart fertig: " + res.created + " neue Aufgabe" + (res.created === 1 ? "" : "n") + "." : "Tagesstart fertig. Nichts Neues.");
@@ -1015,33 +1179,94 @@ function maybeAuto(){
 
 /* ---------- Erfassen ---------- */
 function renderAddAreas(){
-  const box = $("add-areas"); box.replaceChildren();
-  for (const a of AREAS) box.append(el("button", {type:"button", class:"pick", style:"--ac:var(--a-" + a.id + ")", "aria-pressed":String(S.add.area === a.id), text:a.name,
-    onclick:() => { S.add.area = a.id; S.add.manual = true; renderAddAreas(); }}));
+  areaChips($("add-areas"), S.add.area, id => { S.add.area = id; S.add.manual = true; renderAddAreas(); }, {keepFocus:true});
   $("add-hint").hidden = S.add.area !== "zivi";
+}
+/* Frist beim Erfassen: von Hand gewählt, sonst aus dem Text erkannt («bis Freitag»), ausser sie wurde weggeklickt */
+function addDue(){
+  const val = $("add-input").value;
+  if (S.add.dueSet){
+    // Hat die Wahl von Hand ein erkanntes Datum ersetzt, fällt dieses aus dem Titel
+    const p = S.add.replaced ? parseQuick(val, ymd()) : null;
+    return p && p.due ? {due:S.add.dueSet, title:p.title || val.trim(), parsed:true} : {due:S.add.dueSet, title:val.trim(), parsed:false};
+  }
+  const p = parseQuick(val, ymd());
+  if (p.due && !S.add.dueOff) return {due:p.due, title:p.title || val.trim(), parsed:true};
+  return {due:null, title:val.trim(), parsed:false};
 }
 function updateAddPreview(){
   const today = ymd(); const val = $("add-input").value;
-  const p = parseQuick(val, today);
-  const show = !!p.due && !S.add.dueOff;
-  $("add-due").hidden = !show;
-  if (show) $("add-due-t").textContent = "Frist: " + dueLabel(p.due, today) + (dueLabel(p.due, today) === fmtShort(p.due) ? "" : " (" + fmtShort(p.due) + ")");
-  if (!S.add.manual){ const g = guessArea(val); const next = g || "inbox"; if (next !== S.add.area){ S.add.area = next; renderAddAreas(); } }
+  const d = addDue(), b = $("add-due-b");
+  if (d.due){
+    const l = dueLabel(d.due, today);
+    b.textContent = l; b.setAttribute("aria-label", "Frist " + (l === fmtShort(d.due) ? l : l + ", " + fmtShort(d.due)) + " ändern");
+  } else { b.textContent = "+ Datum"; b.setAttribute("aria-label", "+ Datum: Frist wählen"); }
+  $("add-due").classList.toggle("nodue", !d.due); $("add-due-x").hidden = !d.due;
+  if (!S.add.manual){ const next = guessArea(val) || S.filter || "inbox"; if (next !== S.add.area){ S.add.area = next; renderAddAreas(); } }
+}
+function hideDateInput(){ const i = $("add-date"); i.classList.add("vh"); i.setAttribute("aria-hidden", "true"); }
+function resetAdd(){
+  $("add-input").value = ""; $("add-date").value = ""; hideDateInput();
+  S.add = freshAdd(); renderAddAreas(); updateAddPreview();
+}
+const newTaskId = () => "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+/* Nach einem gescheiterten Erfassen: Text → ID. Wer denselben Text nochmals erfasst, bekommt dieselbe ID,
+   so entsteht nichts doppelt, falls die erste Anfrage doch angekommen ist. */
+const retries = new Map();
+function createTask(f, raw, fromSheet, forceId){
+  const id = forceId || retries.get(raw) || newTaskId();
+  retries.delete(raw);
+  const snap = Object.assign({}, S.add);
+  resetAdd();
+  toast("Erfasst in " + AREA_NAME[f.area] + (f.due ? " · " + fmtShort(f.due) : "") + (f.remind && !S.settings ? ". Popups gehen erst mit dem neuen Google-Skript." : ""),
+    "Ändern", () => {
+      if (!$("backdrop").hidden) return; // schon ein anderes Blatt offen
+      const t = S.tasks.find(x => x.id === id); if (t && !t.removed) openEditor(t);
+    });
+  addTask(Object.assign({id}, f)).then(res => {
+    if (res.ok) return;
+    const why = "Nicht gespeichert. " + connText(res.err && res.err.code, res.err && res.err.detail);
+    const cur = res.local;
+    if (cur && cur.removed){ toast(why); return; } // inzwischen entfernt: nichts zurückholen
+    // Stand inklusive Änderungen, die während des Erfassens dazukamen
+    const g = cur ? {title:cur.title, area:areaOf(cur), due:cur.due || null, remind:cur.remind || null, next:!!cur.next} : f;
+    retries.set(raw, id); retries.set(g.title, id);
+    const free = $("backdrop").hidden;
+    // Was das Schnellerfassen nicht darstellen kann (Popup, Nächster Schritt, geänderter Titel): Blatt wieder öffnen
+    if (free && (fromSheet || g.remind || g.next || g.title !== f.title)){ openNew(g, id); toast(why + " Nochmals «Erfassen» antippen."); return; }
+    if (!$("add-input").value){
+      $("add-input").value = raw; S.add = snap;
+      if (g.area !== snap.area){ S.add.area = g.area; S.add.manual = true; }
+      const d = addDue();
+      if (d.due !== g.due){ S.add.replaced = d.parsed; S.add.dueSet = g.due; S.add.dueOff = !g.due; }
+      renderAddAreas(); updateAddPreview();
+      toast(why + " Der Text steht wieder oben.");
+      return;
+    }
+    toast(why, "Nochmals", () => createTask(g, g.title, true, id));
+  });
 }
 $("add-input").addEventListener("input", () => { if (!$("add-input").value) S.add.dueOff = false; updateAddPreview(); });
-$("add-due-x").addEventListener("click", () => { S.add.dueOff = true; updateAddPreview(); $("add-input").focus(); });
-$("add").addEventListener("submit", async e => {
+$("add-due-x").addEventListener("click", () => { S.add.dueSet = null; S.add.dueOff = true; $("add-date").value = ""; updateAddPreview(); $("add-input").focus(); });
+$("add-due-b").addEventListener("click", () => {
+  const inp = $("add-date");
+  inp.value = addDue().due || ""; // leer lassen, sonst meldet das Wählen desselben Tages keine Änderung
+  if (typeof inp.showPicker === "function"){ try { inp.showPicker(); return; } catch(e) {} }
+  inp.classList.remove("vh"); inp.removeAttribute("aria-hidden"); inp.focus(); // ältere Browser: Datumsfeld direkt zeigen
+});
+$("add-date").addEventListener("change", () => {
+  const inp = $("add-date"), v = inp.value;
+  if (isYmd(v)){ S.add.replaced = S.add.replaced || addDue().parsed; S.add.dueSet = v; S.add.dueOff = false; }
+  else { S.add.dueSet = null; S.add.dueOff = true; }
+  hideDateInput();
+  updateAddPreview();
+});
+$("add-more").addEventListener("click", () => openNew());
+$("add").addEventListener("submit", e => {
   e.preventDefault();
   const raw = $("add-input").value.trim(); if (!raw) return;
-  const today = ymd(); const p = parseQuick(raw, today);
-  const title = (S.add.dueOff || !p.due) ? raw : (p.title || raw);
-  const due = S.add.dueOff ? null : p.due;
-  const id = "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  const area = S.add.area;
-  $("add-input").value = ""; S.add = {area:"inbox", manual:false, dueOff:false}; renderAddAreas(); updateAddPreview();
-  toast("Erfasst in " + AREA_NAME[area] + (due ? " · " + fmtShort(due) : ""));
-  const ok = await addTask({id, title:title.slice(0, 200), area, due});
-  if (!ok && !$("add-input").value){ $("add-input").value = raw; updateAddPreview(); }
+  const d = addDue();
+  createTask({title:((d.parsed && d.title) || raw).slice(0, 200), area:S.add.area, due:d.due, remind:null, next:false}, raw);
 });
 
 /* ---------- Bearbeiten ---------- */
@@ -1052,49 +1277,92 @@ function closeSheets(){
   if (lastFocus && lastFocus.isConnected) lastFocus.focus();
 }
 function renderEdAreas(){
-  const box = $("ed-areas"); box.replaceChildren();
-  for (const a of AREAS) box.append(el("button", {type:"button", class:"pick", style:"--ac:var(--a-" + a.id + ")", "aria-pressed":String(S.edit.area === a.id), text:a.name,
-    onclick:() => { S.edit.area = a.id; renderEdAreas(); }}));
+  areaChips($("ed-areas"), S.edit.area, id => { S.edit.area = id; renderEdAreas(); });
+  $("ed-hint").hidden = S.edit.area !== "zivi";
+}
+/* Dasselbe Blatt zum Bearbeiten und für «Mehr …» beim Erfassen */
+function sheetMode(neu){
+  $("sheet-h").textContent = neu ? "Neue Aufgabe" : "Aufgabe bearbeiten";
+  $("ed-save").textContent = neu ? "Erfassen" : "Speichern";
+  $("ed-remove").hidden = neu; $("ed-spacer").hidden = neu;
+  $("ed-confirm").hidden = true; $("ed-acts").hidden = false;
 }
 function openEditor(t){
-  S.edit = {id:t.id, area: AREA_IDS.includes(t.area) ? t.area : "inbox"};
-  $("ed-title").value = t.title || "";
-  $("ed-due").value = t.due || "";
-  $("ed-rd").value = t.remind ? t.remind.slice(0, 10) : "";
-  $("ed-rt").value = t.remind ? t.remind.slice(11, 16) : "";
-  $("ed-next").checked = !!t.next;
+  const orig = {title:t.title || "", area:areaOf(t), due:t.due || null, next:!!t.next, remind:t.remind || null};
+  S.edit = {id:t.id, area:orig.area, orig};
+  sheetMode(false);
+  $("ed-title").value = orig.title;
+  $("ed-due").value = orig.due || "";
+  $("ed-rd").value = orig.remind ? orig.remind.slice(0, 10) : "";
+  $("ed-rt").value = orig.remind ? orig.remind.slice(11, 16) : "";
+  $("ed-next").checked = orig.next;
   const s = t.src || {}; const src = $("ed-src"); src.replaceChildren();
-  if (s.type === "mail" && s.url){ src.append("Aus Gmail: ", el("a", {href:s.url, target:"_blank", rel:"noopener", text:"Mail öffnen ↗"})); src.hidden = false; }
-  else if (s.type === "cal"){ src.textContent = "Aus dem Kalender: " + (s.label || ""); src.hidden = false; }
-  else src.hidden = true;
-  $("ed-confirm").hidden = true; $("ed-acts").hidden = false;
+  const mail = s.type === "mail" && !!s.url;
+  if (mail) src.append("Aus Gmail: ", el("a", {href:s.url, target:"_blank", rel:"noopener", text:"Mail öffnen ↗"}));
+  else if (s.type === "cal") src.textContent = "Aus dem Kalender: " + (s.label || "");
+  $("ed-src-f").hidden = !(mail || s.type === "cal"); $("ed-mailhint").hidden = !mail;
   renderEdAreas();
   showSheet("sheet");
   $("ed-title").focus();
+}
+/* «Mehr …»: Werte aus dem Erfassen-Feld, oder (nach einem Fehler) die zuletzt gewählten Werte mit derselben ID */
+function openNew(pre, retryId){
+  if (!pre){
+    const raw = $("add-input").value.trim(), d = addDue();
+    pre = {title: raw ? ((d.parsed && d.title) || raw) : "", area:S.add.area, due:d.due, remind:null, next:false};
+  }
+  S.edit = {neu:true, area:pre.area, orig:null, retryId:retryId || null};
+  sheetMode(true);
+  $("ed-title").value = pre.title || "";
+  $("ed-due").value = pre.due || "";
+  $("ed-rd").value = pre.remind ? pre.remind.slice(0, 10) : ""; $("ed-rt").value = pre.remind ? pre.remind.slice(11, 16) : "";
+  $("ed-next").checked = !!pre.next;
+  $("ed-src-f").hidden = true;
+  renderEdAreas();
+  showSheet("sheet");
+  // Steht der Text schon, keine Tastatur öffnen: sie würde Popup und «Erfassen» verdecken
+  (pre.title ? $("sheet-h") : $("ed-title")).focus();
 }
 $("ed-cancel").addEventListener("click", closeSheets);
 $("backdrop").addEventListener("click", closeSheets);
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("backdrop").hidden) closeSheets(); });
 $("ed-nodue").addEventListener("click", () => { $("ed-due").value = ""; });
-$("ed-rd").addEventListener("change", () => { if ($("ed-rd").value && !$("ed-rt").value) $("ed-rt").value = "08:00"; });
+$("ed-rd").addEventListener("change", () => {
+  const rd = $("ed-rd").value;
+  if (!rd || $("ed-rt").value) return;
+  // Heute schon nach 8 Uhr: die nächste volle Stunde vorschlagen, sonst käme das Popup nie
+  const h = +fmtHM.format(new Date()).slice(0, 2) + 1;
+  const next = h <= 23 ? pad(h) + ":00" : "23:55";
+  $("ed-rt").value = rd === ymd() && next > "08:00" ? next : "08:00";
+});
 $("ed-rt").addEventListener("change", () => { if ($("ed-rt").value && !$("ed-rd").value) $("ed-rd").value = $("ed-due").value || ymd(); });
 $("ed-nor").addEventListener("click", () => { $("ed-rd").value = ""; $("ed-rt").value = ""; });
-$("ed-save").addEventListener("click", async () => {
+$("ed-save").addEventListener("click", () => {
   const title = $("ed-title").value.trim();
   if (!title){ $("ed-title").focus(); toast("Die Aufgabe braucht einen Text."); return; }
-  const due = isYmd($("ed-due").value) ? $("ed-due").value : null;
   const rd = $("ed-rd").value, rt = $("ed-rt").value;
-  const remind = isYmd(rd) ? rd + "T" + (isHm(rt) ? rt : "08:00") : null;
-  const id = S.edit.id, area = S.edit.area, next = $("ed-next").checked;
+  const f = {title:title.slice(0, 200), area:S.edit.area, due:isYmd($("ed-due").value) ? $("ed-due").value : null,
+    next:$("ed-next").checked, remind:isYmd(rd) ? rd + "T" + (isHm(rt) ? rt : "08:00") : null};
+  const o = S.edit.orig;
+  if (f.remind && f.remind < nowLocal() && (!o || f.remind !== o.remind)){ toast("Die Popup-Zeit ist schon vorbei. Bitte eine spätere wählen."); $("ed-rt").focus(); return; }
+  if (S.edit.neu){ const rid = S.edit.retryId; closeSheets(); createTask(f, title, true, rid); return; }
+  // Nur Geändertes schicken: so überschreibt ein Gerät mit altem Stand keine anderen Felder
+  const changed = {};
+  for (const k of Object.keys(f)) if (f[k] !== o[k]) changed[k] = f[k];
+  const id = S.edit.id;
   closeSheets();
-  if (await mutate(id, {title:title.slice(0, 200), area, due, next, remind})) toast(remind && !S.settings ? "Gespeichert. Popups gehen erst mit dem neuen Google-Skript." : "Gespeichert");
+  if (!Object.keys(changed).length) return;
+  // Bestätigung gleich zeigen (ein Fehler meldet sich selbst), sonst verdrängt sie später einen «Rückgängig»-Toast
+  toast(changed.remind && !S.settings ? "Gespeichert. Popups gehen erst mit dem neuen Google-Skript." : "Gespeichert");
+  mutate(id, changed);
 });
 $("ed-remove").addEventListener("click", () => { $("ed-acts").hidden = true; $("ed-confirm").hidden = false; $("ed-confirm-no").focus(); });
 $("ed-confirm-no").addEventListener("click", () => { $("ed-confirm").hidden = true; $("ed-acts").hidden = false; });
-$("ed-confirm-yes").addEventListener("click", async () => {
+$("ed-confirm-yes").addEventListener("click", () => {
   const id = S.edit.id;
   closeSheets();
-  if (await mutate(id, {removed:true})) toast("Entfernt", "Rückgängig", () => mutate(id, {removed:false}));
+  toast("Entfernt", "Rückgängig", () => mutate(id, {removed:false}));
+  mutate(id, {removed:true});
 });
 
 /* ---------- Einstellungen ---------- */
@@ -1159,6 +1427,7 @@ async function renderPush(){
   if (cur && !opts.includes(cur)) opts.push(cur);
   for (const o of opts) sel.append(el("option", {value:o, text: o === "aus" ? "Aus" : "Um " + o + " Uhr"}));
   sel.value = cur || "aus"; sel.disabled = !set;
+  pushCheck();
 }
 $("set-push-on").addEventListener("click", async () => {
   const btn = $("set-push-on"); btn.disabled = true;
@@ -1172,7 +1441,7 @@ $("set-push-on").addEventListener("click", async () => {
     if (sub && !sameKey(sub.options && sub.options.applicationServerKey, appKey)){ await sub.unsubscribe(); sub = null; }
     if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:appKey});
     const r = await api("push_an", {abo:{endpoint:sub.endpoint}, geraet:deviceName()});
-    store.set(PUSH_KEY, sub.endpoint); store.set(PUSHSYNC_KEY, ymd());
+    store.set(PUSH_KEY, sub.endpoint); store.set(PUSHSYNC_KEY, ymd()); store.del(PUSHOFF_KEY);
     S.settings = r.settings; persist(); await swCfg();
     toast("Popups eingeschaltet. Tipp: Test-Popup schicken.");
   } catch(e){
@@ -1185,7 +1454,7 @@ $("set-push-test").addEventListener("click", async () => {
     const r = await api("push_test");
     const res = r.result || {};
     toast(res.geraete ? (res.ok ? "Test-Popup geschickt. Es sollte gleich erscheinen." : "Problem beim Schicken: " + res.text) : "Kein Gerät eingeschaltet.");
-    const d = await api("load"); if (S.pending === 0) applyData(d.data || {});
+    const gen = S.gen; const d = await api("load"); takeData(d.data, gen);
   } catch(e){ toast("Test nicht möglich. " + errText(e)); }
   finally { btn.disabled = false; renderPush(); }
 });
@@ -1193,7 +1462,7 @@ $("set-push-off").addEventListener("click", async () => {
   const sub = await currentSub();
   try {
     if (sub){ const r = await api("push_aus", {endpoint:sub.endpoint}); S.settings = r.settings; persist(); await sub.unsubscribe(); }
-    store.del(PUSH_KEY);
+    store.del(PUSH_KEY); store.set(PUSHOFF_KEY, true); // bewusst aus: kein Hinweis auf «Heute»
     toast("Popups auf diesem Gerät ausgeschaltet.");
   } catch(e){ toast("Ausschalten nicht möglich. " + errText(e)); }
   renderPush();
@@ -1204,15 +1473,31 @@ $("set-morgen").addEventListener("change", async () => {
   catch(e){ toast("Nicht gespeichert. " + errText(e)); }
   renderPush();
 });
-/* Einmal am Tag beim Google-Skript melden, dass dieses Gerät Popups will (falls es dort verloren ging) */
+/* Einmal am Tag beim Google-Skript melden, dass dieses Gerät Popups will (falls es dort verloren ging).
+   Fehlt das Abo im Browser, obwohl Popups hier an waren, wird es still neu angelegt. */
 async function pushResync(){
   try {
-    if (!S.cfg || !S.settings || !pushTech() || Notification.permission !== "granted" || store.get(PUSHSYNC_KEY) === ymd()) return;
-    const sub = await currentSub();
-    if (!sub) return;
+    if (!S.cfg || !S.settings || !pushTech() || Notification.permission !== "granted") return;
+    let sub = await currentSub();
+    if (!sub){
+      if (!store.get(PUSH_KEY) || store.get(PUSHTRY_KEY) === ymd()) return;
+      store.set(PUSHTRY_KEY, ymd());
+      const reg = await withTimeout(navigator.serviceWorker.ready, 10000);
+      const k = await api("push_schluessel");
+      sub = await withTimeout(reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64uBytes(k.key)}), 15000);
+      await swCfg();
+    } else if (store.get(PUSHSYNC_KEY) === ymd()) return;
     const r = await api("push_an", {abo:{endpoint:sub.endpoint}, geraet:deviceName()});
     S.settings = r.settings; persist(); store.set(PUSH_KEY, sub.endpoint); store.set(PUSHSYNC_KEY, ymd());
+  } catch(e) {} finally { pushCheck(); }
+}
+/* Hinweis auf «Heute», wenn Popups auf dem Handy (oder einem Gerät, wo sie einmal an waren) aus sind */
+async function pushCheck(){
+  let off = false;
+  try {
+    if (S.cfg && S.settings && pushTech() && !store.get(PUSHOFF_KEY) && (store.get(PUSH_KEY) || /Android/i.test(navigator.userAgent))) off = (await pushState()) !== "on";
   } catch(e) {}
+  if (off !== S.pushOff){ S.pushOff = off; render(); }
 }
 $("set-close").addEventListener("click", closeSheets);
 $("set-qr-btn").addEventListener("click", async () => {
@@ -1229,8 +1514,8 @@ $("set-confirm-yes").addEventListener("click", async () => {
   // Popups auf diesem Gerät zuerst beim Google-Skript abmelden
   const sub = await currentSub();
   if (sub){ try { await api("push_aus", {endpoint:sub.endpoint}); } catch(e) {} try { await sub.unsubscribe(); } catch(e) {} }
-  store.del(CFG_KEY); store.del(CACHE_KEY); store.del(CAL_KEY); store.del(PUSH_KEY); store.del(PUSHSYNC_KEY);
-  Object.assign(S, {cfg:null, tasks:[], tasksLoaded:false, briefing:null, last:null, lastLoaded:false, sheetUrl:null, loadedAt:0, cacheAt:null, conn:null, settings:null, cal:{}, calMonth:null, calDay:null});
+  store.del(CFG_KEY); store.del(CACHE_KEY); store.del(CAL_KEY); store.del(PUSH_KEY); store.del(PUSHSYNC_KEY); store.del(PUSHOFF_KEY); store.del(PUSHTRY_KEY);
+  Object.assign(S, {cfg:null, tasks:[], tasksLoaded:false, briefing:null, last:null, lastLoaded:false, sheetUrl:null, loadedAt:0, cacheAt:null, conn:null, settings:null, cal:{}, calMonth:null, calDay:null, pushOff:false});
   swCfg();
   closeSheets(); render(); toast("Gerät getrennt.");
 });
@@ -1282,7 +1567,7 @@ for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("c
 /* ---------- Start ---------- */
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
-  render();
+  render(); updateAddPreview();
   if (S.cfg && Date.now() - S.loadedAt > 15000) reload(); else maybeAuto();
   if (S.cfg && S.tab === "kalender" && S.calMonth) loadMonth(S.calMonth);
 });
@@ -1301,7 +1586,7 @@ window.addEventListener("online", () => { if (S.cfg) reload(); });
   const cal = S.cfg ? store.get(CAL_KEY) : null;
   if (cal && cal.k === ymd().slice(0, 7) && Array.isArray(cal.events)) S.cal[cal.k] = {events:cal.events, errors:cal.errors || [], bis:cal.bis, at:0, loading:false, err:null};
 }
-renderAddAreas(); render();
+renderAddAreas(); updateAddPreview(); render();
 const fromHash = readHash();
 if (fromHash){ $("su-url").value = fromHash.u; $("su-key").value = fromHash.k; doConnect(); }
 else if (S.cfg){ reload(); swCfg(); }
