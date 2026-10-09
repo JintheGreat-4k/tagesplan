@@ -487,9 +487,13 @@ async function api(action, payload){
   } catch(e){
     throw fail(navigator.onLine === false ? "offline" : (e && e.name === "AbortError") ? "timeout" : "network");
   } finally { clearTimeout(timer); }
-  let j = null;
-  try { j = await res.json(); } catch(e) {}
-  if (!j || typeof j !== "object") throw fail("bad_response");
+  let txt = "", j = null;
+  try { txt = await res.text(); j = JSON.parse(txt); } catch(e) {}
+  if (!j || typeof j !== "object"){
+    // Meist eine Fehlerseite von Google: den Anfang des Textes zeigen, damit man den Grund sieht
+    const kurz = txt.replace(/<(style|script)[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+    throw fail("bad_response", "HTTP " + res.status + (kurz ? ": " + kurz : ", leere Antwort"));
+  }
   if (!j.ok) throw fail(j.error === "unauthorized" ? "unauthorized" : "server", j.error);
   return j;
 }
@@ -498,7 +502,7 @@ function connText(code, detail){
     case "offline": return "Offline.";
     case "timeout": return "Das Google-Skript antwortet zu langsam.";
     case "unauthorized": return "Der Schlüssel stimmt nicht.";
-    case "bad_response": return "Das Google-Skript antwortet nicht richtig. Bereitstellung prüfen (Zugriff: «Jeder»).";
+    case "bad_response": return "Das Google-Skript antwortet nicht richtig. Bereitstellung prüfen (Zugriff: «Jeder»)." + (detail ? " Antwort: " + detail : "");
     case "server": return "Fehler im Google-Skript: " + (detail || "unbekannt") + ".";
     default: return "Keine Verbindung zum Google-Skript.";
   }
