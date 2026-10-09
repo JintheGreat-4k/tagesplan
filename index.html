@@ -77,6 +77,7 @@ h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,8vw,42px);l
 .primary{background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);border-radius:10px;padding:10px 16px;font-weight:700}
 .primary:disabled{opacity:.5;cursor:default}
 .ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+a.ghost{text-decoration:none;color:inherit;display:inline-block}
 .danger{color:var(--late);background:transparent;border:1px solid transparent;border-radius:10px;padding:10px 12px}
 .danger.solid{background:var(--late);color:var(--surface);border-color:var(--late);font-weight:700}
 
@@ -384,6 +385,14 @@ button.ev:hover{background:var(--surface-2)}
     <div class="sheet-acts"><button type="button" class="ghost" id="set-qr-btn">QR-Code zeigen</button></div>
     <div class="qr" id="set-qr" hidden><img id="set-qr-img" alt="QR-Code mit dem Einrichtungslink"><p>Enthält deinen Schlüssel. Nicht weitergeben.</p></div>
   </div>
+  <div class="field" id="set-widget" hidden><span class="lbl">Widgets auf dem Startbildschirm</span>
+    <p class="sub">Kalender und Aufgaben als Widgets, mit der Zusatz-App «Tagesplan Widget». Einmal herunterladen und installieren, dann hier verbinden.</p>
+    <div class="sheet-acts">
+      <a class="ghost" id="set-widget-go" href="#">Widget-App verbinden</a>
+      <a class="ghost" href="https://github.com/JintheGreat-4k/tagesplan-widget/releases/latest/download/tagesplan-widget.apk" rel="noopener">Widget-App herunterladen</a>
+    </div>
+    <p class="hint">«Verbinden» gibt Adresse und Schlüssel direkt an die Widget-App weiter, sonst an niemanden.</p>
+  </div>
   <p class="sub" id="set-sheet-p" hidden><a id="set-sheet" target="_blank" rel="noopener">Aufgaben in Google Tabellen ansehen ↗</a></p>
   <div class="sheet-acts" id="set-acts">
     <button type="button" class="primary" id="set-close">Schliessen</button>
@@ -394,7 +403,7 @@ button.ev:hover{background:var(--surface-2)}
     <p>Verbindung auf diesem Gerät trennen? Die Aufgaben bleiben in der Google-Tabelle. Danach musst du dieses Gerät neu einrichten.</p>
     <div class="sheet-acts"><button type="button" class="danger solid" id="set-confirm-yes">Trennen</button><button type="button" class="ghost" id="set-confirm-no">Abbrechen</button></div>
   </div>
-  <p class="hint">Marcs Tagesplan · Version 2.2</p>
+  <p class="hint">Marcs Tagesplan · Version 2.3</p>
 </div>
 
 <div id="toast" role="status" hidden><span id="toast-t"></span><button type="button" id="toast-a" hidden></button></div>
@@ -424,7 +433,7 @@ const S = {
   cfg:null, tasks:[], tasksLoaded:false, briefing:null, last:null, lastLoaded:false, sheetUrl:null,
   loadedAt:0, cacheAt:null, loading:false, conn:null, pending:0, reloadAfter:false, gen:0,
   tab:"heute", filter:null, add:null, edit:null, syncing:false, autoTried:{}, installEvt:null,
-  settings:null, cal:{}, calMonth:null, calDay:null, ev:null, pushOff:false
+  settings:null, cal:{}, calMonth:null, calDay:null, ev:null, pushOff:false, ziel:null
 };
 { const t = store.get(TAB_KEY); if (["heute","kalender","bereiche","erledigt"].includes(t)) S.tab = t; }
 { const f = store.get(FILTER_KEY); if (AREA_IDS.includes(f)) S.filter = f; }
@@ -587,7 +596,7 @@ async function reload(){
     takeData(r.data, gen);
     S.conn = null;
   } catch(e){ S.conn = e.code || "network"; }
-  S.loading = false; render(); maybeAuto();
+  S.loading = false; render(); maybeAuto(); goZiel();
   if (!S.conn){ loadMonth(ymd().slice(0, 7)); pushResync(); }
 }
 function settled(){ S.pending--; S.gen++; persist(); render(); if (!S.pending && S.reloadAfter){ S.reloadAfter = false; reload(); } }
@@ -1402,9 +1411,17 @@ function loadQrLib(){
     document.head.append(s);
   });
 }
+/* Öffnet die Widget-App (Android) und gibt ihr Adresse und Schlüssel. Ohne Widget-App: Download-Seite. */
+function widgetLink(){
+  const fb = "https://github.com/JintheGreat-4k/tagesplan-widget#installieren";
+  return "intent://verbinden#Intent;scheme=tagesplanwidget;package=io.github.jinthegreat4k.tagesplanwidget;S.u=" + encodeURIComponent(S.cfg.u) +
+    ";S.k=" + encodeURIComponent(S.cfg.k) + ";S.browser_fallback_url=" + encodeURIComponent(fb) + ";end";
+}
 $("gear").addEventListener("click", () => {
   $("set-qr").hidden = true; $("set-confirm").hidden = true; $("set-acts").hidden = false;
   $("set-sheet-p").hidden = !S.sheetUrl; if (S.sheetUrl) $("set-sheet").href = S.sheetUrl;
+  $("set-widget").hidden = !/Android/i.test(navigator.userAgent);
+  $("set-widget-go").href = S.cfg ? widgetLink() : "#";
   renderPush();
   showSheet("settings");
   $("set-close").focus();
@@ -1570,13 +1587,41 @@ async function doConnect(){
 $("su-go").addEventListener("click", doConnect);
 $("su-key").addEventListener("keydown", e => { if (e.key === "Enter") doConnect(); });
 function readHash(){
-  if (!location.hash || location.hash.length < 3) return null;
+  if (!location.hash || location.hash.length < 2) return null;
   const p = new URLSearchParams(location.hash.slice(1));
+  try { history.replaceState(null, "", location.pathname + location.search); } catch(e) {} // Testseite (srcdoc) erlaubt das nicht
   const u = p.get("u"), k = p.get("k");
-  if (!u || !k) return null;
-  history.replaceState(null, "", location.pathname + location.search);
-  return {u, k};
+  if (u && k) return {u, k};
+  // Sprung vom Widget oder von einer Verknüpfung auf dem App-Symbol
+  const art = ["neu", "termin", "heute", "kalender", "aufgabe"].find(z => p.has(z));
+  if (art) S.ziel = {art, wert:p.get(art) || ""};
+  return null;
 }
+/* Sprungziele: #neu, #termin, #heute, #kalender oder #kalender=JJJJ-MM-TT, #aufgabe=<ID> */
+function goZiel(){
+  const z = S.ziel;
+  if (!z || !S.cfg) return;
+  if (z.art === "aufgabe" && !S.tasksLoaded) return; // nach dem Laden nochmals
+  S.ziel = null;
+  closeSheets();
+  const today = ymd();
+  if (z.art === "kalender"){
+    const d = isYmd(z.wert) ? z.wert : today;
+    S.tab = "kalender"; S.calMonth = d.slice(0, 7); S.calDay = d;
+  } else S.tab = "heute";
+  store.set(TAB_KEY, S.tab); render();
+  if (z.art === "termin") openEvEditor(null, today);
+  else if (z.art === "neu"){ window.scrollTo(0, 0); $("add-input").focus(); }
+  else if (z.art === "aufgabe"){
+    const t = S.tasks.find(x => x.id === z.wert && !x.removed);
+    if (t) openEditor(t); else toast("Diese Aufgabe gibt es nicht mehr.");
+  }
+}
+window.addEventListener("hashchange", () => {
+  const f = readHash();
+  if (f){ $("su-url").value = f.u; $("su-key").value = f.k; doConnect(); }
+  else goZiel();
+});
 
 /* ---------- Installieren ---------- */
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); S.installEvt = e; renderSync(ymd()); });
@@ -1615,7 +1660,7 @@ window.addEventListener("online", () => { if (S.cfg) reload(); });
 renderAddAreas(); updateAddPreview(); render();
 const fromHash = readHash();
 if (fromHash){ $("su-url").value = fromHash.u; $("su-key").value = fromHash.k; doConnect(); }
-else if (S.cfg){ reload(); swCfg(); }
+else if (S.cfg){ reload(); swCfg(); goZiel(); }
 
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
   navigator.serviceWorker.register("sw.js").catch(() => {});
