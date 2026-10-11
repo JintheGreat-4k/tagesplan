@@ -53,10 +53,17 @@ async function popupsZeigen(){
   const opt = {icon:"icon-192.png", data:{url:"./"}};
   if (!j) return self.registration.showNotification("Marcs Tagesplan", Object.assign({body:"Neue Erinnerung. Antippen zum Öffnen.", tag:"tagesplan"}, opt));
   const items = j.items || [];
-  const schon = await lesen("gezeigt", []);
+  const alt = await lesen("gezeigt", null);
+  const erstesMal = !Array.isArray(alt); // neues Gerät: «gezeigt» gibt es noch nicht
+  const schon = erstesMal ? [] : alt;
   const neu = items.filter(i => schon.indexOf(i.id) < 0);
   // Chrome verlangt bei jedem Push eine sichtbare Mitteilung
-  const liste = neu.length ? neu : items.slice(-1);
+  let liste = neu.length ? neu : items.slice(-1);
+  if (erstesMal && items.length){
+    // Neues Gerät: nur der jüngste Versand (bis 2 Min. davor), alles Ältere gilt als gesehen
+    const max = Math.max.apply(null, items.map(i => i.at || 0));
+    liste = items.filter(i => (i.at || 0) >= max - 120000);
+  }
   if (!liste.length) return self.registration.showNotification("Marcs Tagesplan", Object.assign({body:"Antippen zum Öffnen.", tag:"tagesplan"}, opt));
   for (const i of liste){
     await self.registration.showNotification(i.title || "Marcs Tagesplan", Object.assign({body:i.body || "", tag:i.id, timestamp:i.at || Date.now()}, opt));
@@ -69,7 +76,8 @@ self.addEventListener("push", e => { e.waitUntil(popupsZeigen()); });
 self.addEventListener("notificationclick", e => {
   e.notification.close();
   e.waitUntil(self.clients.matchAll({type:"window", includeUncontrolled:true}).then(list => {
-    for (const w of list) if ("focus" in w) return w.focus();
+    // Nur Fenster dieser App: unter derselben Adresse (github.io) können andere Projekte offen sein
+    for (const w of list) if ("focus" in w && String(w.url).startsWith(self.registration.scope)) return w.focus();
     return self.clients.openWindow("./");
   }));
 });

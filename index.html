@@ -220,6 +220,7 @@ button.ev:hover{background:var(--surface-2)}
 .daterow input{flex:1;min-width:0}
 .check{display:flex;gap:10px;align-items:center;font-size:15px}
 .check input{width:18px;height:18px}
+.field>.check{font-size:15px;color:inherit;letter-spacing:normal;text-transform:none}
 .sheet-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sheet-acts .spacer{flex:1}
 .confirm{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:10px;background:var(--late-soft)}
@@ -379,6 +380,10 @@ button.ev:hover{background:var(--surface-2)}
     <select id="set-morgen"></select>
     <p class="hint">Termine und fällige Aufgaben des Tages. Weitere Popups setzt du bei einzelnen Terminen und Aufgaben.</p>
   </div>
+  <div class="field" id="set-diskret-f" hidden>
+    <label class="check"><input type="checkbox" id="set-diskret" aria-describedby="set-diskret-h"> Diskrete Popups</label>
+    <p class="hint" id="set-diskret-h">Popups ohne Titel, Ort und Aufgabentext, z. B. «Termin · Heute 08:00–09:00» oder am Morgen «3 Termine, erster 08:00». Gilt für alle Geräte.</p>
+  </div>
   <p class="hint">Damit nichts doppelt kommt: in den Android-Einstellungen die Mitteilungen der App «Google Kalender» ausschalten.</p>
   <div class="field"><span class="lbl">Aufs Handy übertragen</span>
     <p class="sub">QR-Code mit der Handy-Kamera scannen und den Link in Chrome öffnen. Danach im Chrome-Menü ⋮ «App installieren» wählen.</p>
@@ -403,7 +408,7 @@ button.ev:hover{background:var(--surface-2)}
     <p>Verbindung auf diesem Gerät trennen? Die Aufgaben bleiben in der Google-Tabelle. Danach musst du dieses Gerät neu einrichten.</p>
     <div class="sheet-acts"><button type="button" class="danger solid" id="set-confirm-yes">Trennen</button><button type="button" class="ghost" id="set-confirm-no">Abbrechen</button></div>
   </div>
-  <p class="hint">Marcs Tagesplan · Version 2.3</p>
+  <p class="hint">Marcs Tagesplan · Version 2.4</p>
 </div>
 
 <div id="toast" role="status" hidden><span id="toast-t"></span><button type="button" id="toast-a" hidden></button></div>
@@ -796,15 +801,22 @@ function renderHeute(v, today){
   const ts = el("section", null, el("div", {class:"h2row"}, el("h2", null, "Termine heute"),
     el("button", {class:"btn small", type:"button", text:"+ Termin", onclick:() => openEvEditor(null, today)})));
   const live = eventsOn(today);
+  // Kalender-Hinweise zur gezeigten Liste: vom Laden der Termine, sonst vom Tagesstart. Mit Hinweis ist eine leere Liste nicht «keine Termine».
+  const oben = b && Array.isArray(b.errors) ? b.errors : [];
+  const calErr = live ? calFor(today).errors || [] : oben.filter(x => /^Kalender «/.test(x));
+  const leer = calErr.length ? "Termine nicht lesbar." : "Keine Termine im Kalender.";
   if (live){
     // Direkt aus dem Kalender: antippen zum Bearbeiten
-    if (!live.length) ts.append(el("p", {class:"empty", text:"Keine Termine im Kalender."}));
+    if (!live.length) ts.append(el("p", {class:"empty", text:leer}));
     else ts.append(el("div", {class:"agenda"}, live.map(e => evRow(e, today))));
+    // Steht der Hinweis schon oben (vom Tagesstart), nicht nochmals zeigen
+    const neu = calErr.filter((x, i) => !oben.includes(x) && calErr.indexOf(x) === i);
+    if (neu.length) ts.append(el("div", {class:"calstate"}, el("span", {text:neu.join(" ")})));
   } else {
     // Noch nicht geladen: Stand vom Tagesstart
     const evs = b ? (b.events || []).filter(e => !/pfadi/i.test(e.cal || "")) : [];
     if (!b) ts.append(el("p", {class:"empty", text:"Erscheinen nach dem Tagesstart."}));
-    else if (!evs.length) ts.append(el("p", {class:"empty", text:"Keine Termine im Kalender."}));
+    else if (!evs.length) ts.append(el("p", {class:"empty", text:leer}));
     else ts.append(el("div", {class:"agenda"}, evs.map(e => el("div", {class:"ev"},
         el("time", {text: e.allDay ? (e.until && e.until !== today ? "bis " + fmtShort(e.until) : "ganztägig") : e.start ? e.start + "–" + e.end : "bis " + e.end}),
         el("span", {class:"t"}, e.title, el("span", {class:"c", text:e.cal}))))));
@@ -1446,6 +1458,11 @@ async function swCfg(){
     else await c.delete("cfg");
   } catch(e) {}
 }
+/* Nach «Ausschalten» oder «Gerät trennen» gilt dieses Gerät für den Service Worker wieder als neu:
+   Beim nächsten Einschalten zeigt er nur den jüngsten Versand, nicht alle Popups der letzten 24 h */
+async function swNeu(){
+  try { if ("caches" in window) await (await caches.open(SW_CFG)).delete("gezeigt"); } catch(e) {}
+}
 async function pushState(){
   if (!pushTech()) return "unsupported";
   if (Notification.permission === "denied") return "denied";
@@ -1470,7 +1487,14 @@ async function renderPush(){
   if (cur && !opts.includes(cur)) opts.push(cur);
   for (const o of opts) sel.append(el("option", {value:o, text: o === "aus" ? "Aus" : "Um " + o + " Uhr"}));
   sel.value = cur || "aus"; sel.disabled = !set;
+  renderDiskret();
   pushCheck();
+}
+/* Schalter «Diskrete Popups»: Ältere Skripte kennen ihn nicht, dann erscheint er gar nicht */
+function renderDiskret(){
+  const set = S.settings, da = !!set && typeof set.diskret === "boolean";
+  $("set-diskret-f").hidden = !da;
+  $("set-diskret").checked = da && set.diskret;
 }
 $("set-push-on").addEventListener("click", async () => {
   const btn = $("set-push-on"); btn.disabled = true;
@@ -1506,14 +1530,32 @@ $("set-push-off").addEventListener("click", async () => {
   try {
     if (sub){ const r = await api("push_aus", {endpoint:sub.endpoint}); S.settings = r.settings; persist(); await sub.unsubscribe(); }
     store.del(PUSH_KEY); store.set(PUSHOFF_KEY, true); // bewusst aus: kein Hinweis auf «Heute»
+    swNeu();
     toast("Popups auf diesem Gerät ausgeschaltet.");
   } catch(e){ toast("Ausschalten nicht möglich. " + errText(e)); }
   renderPush();
 });
 $("set-morgen").addEventListener("change", async () => {
   const v = $("set-morgen").value;
-  try { const r = await api("einstellungen", {morgen:v}); S.settings = r.settings; persist(); toast(v === "aus" ? "Morgen-Übersicht ausgeschaltet." : "Morgen-Übersicht um " + v + " Uhr."); }
+  // S.gen++: Eine ältere Ladeantwort, die erst danach eintrifft, überschreibt den neuen Stand nicht (takeData lädt dann frisch)
+  try { const r = await api("einstellungen", {morgen:v}); S.settings = r.settings; S.gen++; persist(); toast(v === "aus" ? "Morgen-Übersicht ausgeschaltet." : "Morgen-Übersicht um " + v + " Uhr."); }
   catch(e){ toast("Nicht gespeichert. " + errText(e)); }
+  renderPush();
+});
+$("set-diskret").addEventListener("change", async () => {
+  const box = $("set-diskret"), v = box.checked, fokus = document.activeElement === box;
+  box.disabled = true;
+  try {
+    const r = await api("einstellungen", {diskret:v});
+    S.settings = r.settings; S.gen++; persist(); // wie bei der Morgen-Übersicht: ältere Ladeantwort verwerfen
+    // Ein älteres Skript übergeht das Feld still und meldet trotzdem «ok»: nur glauben, wenn der neue Stand zurückkommt
+    const neu = r.settings ? r.settings.diskret : undefined;
+    if (neu === v) toast(v ? "Diskrete Popups eingeschaltet." : "Diskrete Popups ausgeschaltet.");
+    else toast("Nicht gespeichert." + (typeof neu === "boolean" ? "" : " Das Google-Skript ist noch nicht aktualisiert."));
+  } catch(e){ toast("Nicht gespeichert. " + errText(e)); }
+  // Zeigt wieder den gespeicherten Stand: nach einem Fehler steht der Schalter zurück
+  box.disabled = false; renderDiskret();
+  if (fokus && document.activeElement === document.body && !$("settings").hidden && !$("set-diskret-f").hidden) box.focus(); // gesperrt verliert der Schalter den Tastaturfokus
   renderPush();
 });
 /* Einmal am Tag beim Google-Skript melden, dass dieses Gerät Popups will (falls es dort verloren ging).
@@ -1559,7 +1601,7 @@ $("set-confirm-yes").addEventListener("click", async () => {
   if (sub){ try { await api("push_aus", {endpoint:sub.endpoint}); } catch(e) {} try { await sub.unsubscribe(); } catch(e) {} }
   store.del(CFG_KEY); store.del(CACHE_KEY); store.del(CAL_KEY); store.del(PUSH_KEY); store.del(PUSHSYNC_KEY); store.del(PUSHOFF_KEY); store.del(PUSHTRY_KEY);
   Object.assign(S, {cfg:null, tasks:[], tasksLoaded:false, briefing:null, last:null, lastLoaded:false, sheetUrl:null, loadedAt:0, cacheAt:null, conn:null, settings:null, cal:{}, calMonth:null, calDay:null, pushOff:false});
-  swCfg();
+  swCfg(); swNeu();
   closeSheets(); render(); toast("Gerät getrennt.");
 });
 
