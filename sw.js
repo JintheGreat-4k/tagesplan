@@ -1,95 +1,45 @@
-/* Hält die App-Dateien offline bereit und zeigt Popups. Daten kommen immer frisch vom Google-Skript. */
-const CACHE = "tagesplan-v3";
-const CFG = "tagesplan-cfg"; // Adresse und Schlüssel des Google-Skripts, legt die App hier ab
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable.png", "./sc-neu.png", "./sc-termin.png", "./sc-kalender.png"];
+// Ersatz für https://jinthegreat-4k.github.io/tagesplan/sw.js (zusammen mit index.html aus diesem Ordner, erst nach
+// Marcs Bestätigung des Lifehub veröffentlichen). Chrome holt ihn beim nächsten Öffnen der alten Adresse oder nach
+// einem Popup. Er meldet die Popups dieses Geräts beim Google-Skript ab, beendet das Abo, löscht die tagesplan-*-
+// Zwischenspeicher (darin lagen Adresse und Schlüssel des Skripts) und meldet sich selbst ab.
+const URL_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[^\/?#]+|macros)\/s\/[\w-]+\/exec$/;
+const ZIEL = "https://lauener.online/plan/";
 
-self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
-});
-
-self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k.startsWith("tagesplan-") && k !== CACHE && k !== CFG).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
-});
-
-self.addEventListener("fetch", e => {
-  const req = e.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
-  if (req.mode === "navigate"){
-    // Zuerst aus dem Netz (damit Updates ankommen), offline aus dem Speicher
-    e.respondWith(fetch(req).then(res => {
-      if (res.ok){ const copy = res.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); }
-      return res;
-    }).catch(() => caches.match("./index.html")));
-    return;
+async function aufraeumen(){
+  let sub = null;
+  try { sub = await self.registration.pushManager.getSubscription(); } catch(e){ sub = null; }
+  if (sub){
+    try {
+      const c = await caches.open("tagesplan-cfg");
+      const res = await c.match("cfg");
+      const cfg = res ? await res.json() : null;
+      if (cfg && typeof cfg.u === "string" && URL_RE.test(cfg.u) && typeof cfg.k === "string"){
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 8000);
+        await fetch(cfg.u, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, cache:"no-store", signal:ctrl.signal,
+          body:JSON.stringify({key:cfg.k, action:"push_aus", endpoint:sub.endpoint})}).catch(() => {});
+        clearTimeout(timer);
+      }
+    } catch(e){ /* weiter: das Abo endet so oder so */ }
+    try { await sub.unsubscribe(); } catch(e){}
   }
-  e.respondWith(caches.match(req).then(hit => hit || fetch(req)));
-});
-
-/* ---------- Popups ---------- */
-async function lesen(name, std){
-  try { const r = await (await caches.open(CFG)).match(name); return r ? await r.json() : std; } catch(e){ return std; }
-}
-async function schreiben(name, wert){
-  try { await (await caches.open(CFG)).put(name, new Response(JSON.stringify(wert), {headers:{"Content-Type":"application/json"}})); } catch(e) {}
-}
-async function skript(action, extra){
-  const cfg = await lesen("cfg", null);
-  if (!cfg || !cfg.u || !cfg.k) return null;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 25000);
   try {
-    const res = await fetch(cfg.u, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, cache:"no-store", signal:ctrl.signal,
-      body:JSON.stringify(Object.assign({key:cfg.k, action}, extra || {}))});
-    const j = await res.json();
-    return j && j.ok ? j : null;
-  } catch(e){ return null; } finally { clearTimeout(timer); }
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k.startsWith("tagesplan-")).map(k => caches.delete(k)));
+  } catch(e){}
+  try { await self.registration.unregister(); } catch(e){}
 }
 
-/* Der Push ist leer. Die Texte holt der Service Worker beim Google-Skript ab. */
-async function popupsZeigen(){
-  const j = await skript("popups");
-  const opt = {icon:"icon-192.png", data:{url:"./"}};
-  if (!j) return self.registration.showNotification("Marcs Tagesplan", Object.assign({body:"Neue Erinnerung. Antippen zum Öffnen.", tag:"tagesplan"}, opt));
-  const items = j.items || [];
-  const alt = await lesen("gezeigt", null);
-  const erstesMal = !Array.isArray(alt); // neues Gerät: «gezeigt» gibt es noch nicht
-  const schon = erstesMal ? [] : alt;
-  const neu = items.filter(i => schon.indexOf(i.id) < 0);
-  // Chrome verlangt bei jedem Push eine sichtbare Mitteilung
-  let liste = neu.length ? neu : items.slice(-1);
-  if (erstesMal && items.length){
-    // Neues Gerät: nur der jüngste Versand (bis 2 Min. davor), alles Ältere gilt als gesehen
-    const max = Math.max.apply(null, items.map(i => i.at || 0));
-    liste = items.filter(i => (i.at || 0) >= max - 120000);
-  }
-  if (!liste.length) return self.registration.showNotification("Marcs Tagesplan", Object.assign({body:"Antippen zum Öffnen.", tag:"tagesplan"}, opt));
-  for (const i of liste){
-    await self.registration.showNotification(i.title || "Marcs Tagesplan", Object.assign({body:i.body || "", tag:i.id, timestamp:i.at || Date.now()}, opt));
-  }
-  await schreiben("gezeigt", schon.concat(neu.map(i => i.id)).slice(-80));
-}
+self.addEventListener("install", () => { self.skipWaiting(); });
+self.addEventListener("activate", e => { e.waitUntil(aufraeumen()); });
 
-self.addEventListener("push", e => { e.waitUntil(popupsZeigen()); });
+// Kommt bis zum Aufräumen noch ein Popup an: Chrome verlangt eine sichtbare Meldung.
+self.addEventListener("push", e => {
+  e.waitUntil(self.registration.showNotification("Marcs Tagesplan", {body:"Der Tagesplan ist umgezogen. Antippen öffnet ihn im Lifehub.", tag:"umzug"})
+    .then(aufraeumen));
+});
 
 self.addEventListener("notificationclick", e => {
   e.notification.close();
-  e.waitUntil(self.clients.matchAll({type:"window", includeUncontrolled:true}).then(list => {
-    // Nur Fenster dieser App: unter derselben Adresse (github.io) können andere Projekte offen sein
-    for (const w of list) if ("focus" in w && String(w.url).startsWith(self.registration.scope)) return w.focus();
-    return self.clients.openWindow("./");
-  }));
-});
-
-/* Chrome erneuert die Push-Adresse selten von selbst: neue Adresse beim Google-Skript melden */
-self.addEventListener("pushsubscriptionchange", e => {
-  e.waitUntil((async () => {
-    const k = await skript("push_schluessel");
-    if (!k || !k.key) return;
-    let s = k.key.replace(/-/g, "+").replace(/_/g, "/");
-    while (s.length % 4) s += "=";
-    const sub = await self.registration.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:Uint8Array.from(atob(s), c => c.charCodeAt(0))});
-    await skript("push_an", {abo:{endpoint:sub.endpoint}, geraet:/Android/i.test(navigator.userAgent) ? "Handy (Android)" : "Gerät"});
-  })());
+  e.waitUntil(self.clients.openWindow(ZIEL));
 });
